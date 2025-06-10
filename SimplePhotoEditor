@@ -1,0 +1,111 @@
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from PIL import Image, ImageTk, ImageEnhance, ImageFilter
+
+class PhotoEditor:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Базовый редактор фото на Python")
+        self.image = None
+        self.img_display = None
+
+        # Элемент для отображения изображения
+        self.canvas = tk.Label(root)
+        self.canvas.pack(padx=10, pady=10)
+
+        # Кнопки управления
+        btn_frame = tk.Frame(root)
+        btn_frame.pack(pady=5)
+
+        tk.Button(btn_frame, text="Открыть", command=self.open_image, width=12).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Сохранить", command=self.save_image, width=12).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Ярче", command=self.brighten, width=10).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Темнее", command=self.darken, width=10).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Ч/Б", command=self.to_grayscale, width=10).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Резкость", command=self.sharpen, width=10).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Повернуть", command=self.rotate, width=10).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Обрезать", command=self.crop, width=10).pack(side=tk.LEFT, padx=2)
+        tk.Button(btn_frame, text="Сброс", command=self.reset, width=10).pack(side=tk.LEFT, padx=2)
+
+        self.original_image = None  # Для сброса
+
+    def open_image(self):
+        path = filedialog.askopenfilename(
+            filetypes=[("Изображения", "*.jpg *.jpeg *.png *.bmp *.gif")]
+        )
+        if path:
+            try:
+                self.image = Image.open(path)
+                self.original_image = self.image.copy()
+                self.show_image(self.image)
+            except Exception as e:
+                messagebox.showerror("Ошибка", f"Не удалось открыть изображение:\n{e}")
+
+    def save_image(self):
+        if self.image:
+            path = filedialog.asksaveasfilename(
+                defaultextension=".jpg",
+                filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("BMP", "*.bmp"), ("GIF", "*.gif")]
+            )
+            if path:
+                try:
+                    self.image.save(path)
+                    messagebox.showinfo("Сохранено", "Изображение успешно сохранено!")
+                except Exception as e:
+                    messagebox.showerror("Ошибка", f"Не удалось сохранить изображение:\n{e}")
+        else:
+            messagebox.showwarning("Нет изображения", "Сначала откройте изображение!")
+
+    def show_image(self, img):
+        img_resized = img.copy()
+        img_resized.thumbnail((500, 500))
+        self.img_display = ImageTk.PhotoImage(img_resized)
+        self.canvas.config(image=self.img_display)
+        self.canvas.image = self.img_display
+
+    def brighten(self):
+        if self.image:
+            enhancer = ImageEnhance.Brightness(self.image)
+            self.image = enhancer.enhance(1.2)
+            self.show_image(self.image)
+
+    def darken(self):
+        if self.image:
+            enhancer = ImageEnhance.Brightness(self.image)
+            self.image = enhancer.enhance(0.8)
+            self.show_image(self.image)
+
+    def to_grayscale(self):
+        if self.image:
+            self.image = self.image.convert("L").convert("RGB")
+            self.show_image(self.image)
+
+    def sharpen(self):
+        if self.image:
+            self.image = self.image.filter(ImageFilter.SHARPEN)
+            self.show_image(self.image)
+
+    def rotate(self):
+        if self.image:
+            self.image = self.image.rotate(90, expand=True)
+            self.show_image(self.image)
+
+    def crop(self):
+        if self.image:
+            w, h = self.image.size
+            left = w * 0.1
+            top = h * 0.1
+            right = w * 0.9
+            bottom = h * 0.9
+            self.image = self.image.crop((left, top, right, bottom))
+            self.show_image(self.image)
+
+    def reset(self):
+        if self.original_image:
+            self.image = self.original_image.copy()
+            self.show_image(self.image)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PhotoEditor(root)
+    root.mainloop()
